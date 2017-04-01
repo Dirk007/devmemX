@@ -41,6 +41,10 @@
 
 #define VER_STR "devmem version T/C (http://git.io/vZ5iD) rev.0.3e"
 
+#define bool unsigned char
+#define true 1
+#define false 0
+
 int f_dbg = 0;
 
 static void usage(const char *cmd)
@@ -52,6 +56,7 @@ static void usage(const char *cmd)
         "Switches:\n"
         "\t-r      : read back after write\n"
         "\t-a      : do not check alignment\n"
+	"\t-b      : display binary on read(back)\n"
         "\t--version | -V : print version\n"
         "\n",
         cmd);
@@ -73,15 +78,19 @@ int main(int argc, char **argv)
     int f_align_check = 1; // flag to require alignment
     const char *progname = argv[0];
     int opt;
+    bool binaryDisplay = false;
 
     opterr = 0;
-    while ((opt = getopt(argc, argv, "+raAdV")) != -1) {
+    while ((opt = getopt(argc, argv, "+rabAdV")) != -1) {
         switch(opt) {
         case 'r':
             f_readback = 1;
             break;
         case 'a':
             f_align_check = 0;
+            break;
+        case 'b':
+            binaryDisplay = true;
             break;
         case 'A':    
             // Absolute address mode. Does nothing now, for future compat.;
@@ -181,8 +190,6 @@ int main(int argc, char **argv)
         printerr("Error opening /dev/mem (%d) : %s\n", errno, strerror(errno));
         exit(1);
     }
-    //printf("/dev/mem opened.\n");
-    //fflush(stdout);
 
     map_base = mmap(0, map_size, PROT_READ | PROT_WRITE, MAP_SHARED,
                     fd, 
@@ -191,8 +198,6 @@ int main(int argc, char **argv)
         printerr("Error mapping (%d) : %s\n", errno, strerror(errno));
         exit(1);
     }
-    //printf("Memory mapped at address %p.\n", map_base);
-    //fflush(stdout);
 
     virt_addr = map_base + offset;
 
@@ -228,24 +233,37 @@ int main(int argc, char **argv)
     }
     
     if (argc <= 3 || f_readback) {
+	unsigned short bits = 0;
         switch (access_size) {
             case 1:
                 read_result = *((volatile uint8_t *) virt_addr);
+		bits = 8;
                 break;
             case 2:
                 read_result = *((volatile uint16_t *) virt_addr);
+		bits = 16;
                 break;
             case 4:
                 read_result = *((volatile uint32_t *) virt_addr);
+		bits = 32;
                 break;
         }
 
-        //printf("Value at address 0x%lld (%p): 0x%lu\n", (long long)target, virt_addr, read_result);
-        //fflush(stdout);
-        if (f_readback && argc > 3)
-            printf("Written 0x%lx; readback 0x%lx\n", writeval, read_result);
-        else
-            printf("%08lX\n", read_result);
+        if (f_readback && argc > 3) {
+            printf("Written 0x%lx; ", writeval);
+	}
+
+	if (binaryDisplay) 
+	{
+		for (unsigned short i = 0; i < bits; i++) {
+			unsigned char bit = (unsigned char)((read_result >> (bits - 1) - i) & 1);
+			printf("%01d", bit);
+		}
+		printf("\n");
+	} else {
+        	printf("%08lX\n", read_result);
+	}
+
         fflush(stdout);
     }
 
