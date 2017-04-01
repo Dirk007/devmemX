@@ -48,7 +48,7 @@ static void usage(const char *cmd)
     fprintf(stderr, "\nUsage:\t%s [-switches] address [ type [ data ] ]\n"
         "\taddress : memory address to act upon\n"
         "\ttype    : access operation type : [b]yte (8 bit), [w]word (16 bit), [d]word (32 bit)\n"
-        "\tdata    : data to be written\n\n"
+        "\tdata    : data to be written. If empty, data is only _read_.\n\n"
         "Switches:\n"
         "\t-r      : read back after write\n"
         "\t-a      : do not check alignment\n"
