@@ -57,6 +57,7 @@ static void usage(const char *cmd)
         "\t-r      : read back after write\n"
         "\t-a      : do not check alignment\n"
 	"\t-b      : display binary on read(back)\n"
+	"\t-B      : display binary with header\n"
         "\t--version | -V : print version\n"
         "\n",
         cmd);
@@ -79,9 +80,10 @@ int main(int argc, char **argv)
     const char *progname = argv[0];
     int opt;
     bool binaryDisplay = false;
+    bool binaryHeaderDisplay = false;
 
     opterr = 0;
-    while ((opt = getopt(argc, argv, "+rabAdV")) != -1) {
+    while ((opt = getopt(argc, argv, "+rabBAdV")) != -1) {
         switch(opt) {
         case 'r':
             f_readback = 1;
@@ -91,6 +93,10 @@ int main(int argc, char **argv)
             break;
         case 'b':
             binaryDisplay = true;
+            break;
+        case 'B':
+            binaryDisplay = true;
+            binaryHeaderDisplay = true;
             break;
         case 'A':    
             // Absolute address mode. Does nothing now, for future compat.;
@@ -250,13 +256,26 @@ int main(int argc, char **argv)
         }
 
         if (f_readback && argc > 3) {
-            printf("Written 0x%lx; ", writeval);
+            printf("Written 0x%lx\n", writeval);
+	    if (!binaryDisplay) {
+		printf("Read ");
+	    }
 	}
 
 	if (binaryDisplay) 
 	{
-		for (unsigned short i = 0; i < bits; i++) {
-			unsigned char bit = (unsigned char)((read_result >> (bits - 1) - i) & 1);
+		if (binaryHeaderDisplay) {
+			for (short i = bits-1; i >= 0; i--) {
+				printf("%01d", i / 10);
+			}
+			printf("\n");
+			for (short i = bits-1; i >= 0; i--) {
+				printf("%01d", i % 10);
+			}
+			printf("\n");
+		}
+		for (short i = bits-1; i >=0; i--) {
+			unsigned char bit = (unsigned char)((read_result >> i) & 1);
 			printf("%01d", bit);
 		}
 		printf("\n");
