@@ -47,7 +47,7 @@ static void usage(const char *cmd)
 {
     fprintf(stderr, "\nUsage:\t%s [-switches] address [ type [ data ] ]\n"
         "\taddress : memory address to act upon\n"
-        "\ttype    : access operation type : [b]yte, [h]alfword, [w]ord\n"
+        "\ttype    : access operation type : [b]yte (8 bit), [w]word (16 bit), [d]word (32 bit)\n"
         "\tdata    : data to be written\n\n"
         "Switches:\n"
         "\t-r      : read back after write\n"
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     void *map_base, *virt_addr;
     unsigned long read_result = -1, writeval=-1;
     uint64_t target;
-    int access_type = 'w';
+    int access_type = 'd';
     int access_size = 4;
     unsigned int pagesize = (unsigned)getpagesize(); /* or sysconf(_SC_PAGESIZE)  */
     unsigned int map_size = pagesize;
@@ -141,10 +141,10 @@ int main(int argc, char **argv)
             access_size = 1;
             break;
         case 'w':
-            access_size = 4;
-            break;
-        case 'h':
             access_size = 2;
+            break;
+        case 'd':
+            access_size = 4;
             break;
         default:
             printerr("Illegal data type: %s\n", argv[2]);
